@@ -519,10 +519,11 @@ const CATEGORY_WORD_MEANINGS_PT: Partial<Record<WordCategory, Record<string, str
   }
 };
 
-export function getWordMeaningPt(word: string, category?: WordCategory): string {
+export function getWordMeaningPt(word: string, category?: string): string {
   const normalizedWord = word.toLowerCase();
-  const contextMeaning = category
-    ? CATEGORY_WORD_MEANINGS_PT[category]?.[normalizedWord]
+  const typedCategory = category as WordCategory | undefined;
+  const contextMeaning = typedCategory
+    ? CATEGORY_WORD_MEANINGS_PT[typedCategory]?.[normalizedWord]
     : undefined;
 
   return contextMeaning ?? WORD_MEANINGS_PT[normalizedWord] ?? 'sem traducao';

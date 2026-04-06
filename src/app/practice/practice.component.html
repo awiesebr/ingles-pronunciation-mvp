@@ -1,10 +1,23 @@
 <main class="page">
   <section class="card">
-    <h1>Travel English Pronunciation - Phase 1</h1>
-    <p class="subtitle">Start simple: one word at a time.</p>
+    <h1>Travel English Pronunciation</h1>
+    <p class="subtitle">{{ activePhase().subtitle }}</p>
 
-    <div class="categories" role="group" aria-label="Phrase categories">
-      @for (category of categories; track category) {
+    <p class="label">Choose phase</p>
+    <div class="phases" role="group" aria-label="Practice phases">
+      @for (phase of phases; track phase.id) {
+        <button
+          class="chip"
+          [class.active]="selectedPhase() === phase.id"
+          type="button"
+          (click)="changePhase(phase.id)">
+          {{ phase.title }}
+        </button>
+      }
+    </div>
+
+    <div class="categories" role="group" aria-label="Practice categories">
+      @for (category of categories(); track category) {
         <button
           class="chip"
           [class.active]="selectedCategory() === category"
@@ -15,10 +28,12 @@
       }
     </div>
 
-    <p class="label">Expected word</p>
+    <p class="label">{{ activePhase().itemLabel }}</p>
     <p class="phrase">
-      <span class="en-word">{{ currentWord() }}</span>
-      <span class="pt-word">({{ currentMeaningPt() }})</span>
+      <span class="en-word">{{ currentItem() }}</span>
+      @if (currentMeaningPt()) {
+        <span class="pt-word">({{ currentMeaningPt() }})</span>
+      }
     </p>
 
     <div class="speed-control">
@@ -51,7 +66,7 @@
       <button type="button" class="btn secondary" [disabled]="!myVoiceUrl()" (click)="playMyVoice()">
         Hear my voice
       </button>
-      <button type="button" class="btn ghost" (click)="nextWord()">Next word</button>
+      <button type="button" class="btn ghost" (click)="nextWord()">{{ activePhase().nextButtonLabel }}</button>
     </div>
 
     <div class="results">

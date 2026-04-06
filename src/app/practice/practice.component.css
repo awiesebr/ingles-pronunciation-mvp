@@ -38,6 +38,14 @@ h1 {
   margin-bottom: 1.25rem;
 }
 
+.phases {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+}
+
 .chip {
   border: none;
   background: #eaf2ff;

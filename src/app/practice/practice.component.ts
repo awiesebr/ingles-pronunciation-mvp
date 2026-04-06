@@ -1,11 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, OnDestroy, signal } from '@angular/core';
 import {
-  ALL_WORD_CATEGORIES,
-  getWordMeaningPt,
-  WORDS_BY_CATEGORY,
-  WordCategory
-} from '../data/words.data';
+  PHASES_BY_ID,
+  PRACTICE_PHASES,
+  PhaseId
+} from '../data/practice-phases.data';
 import { SpeechService } from '../services/speech.service';
 import { getSimilarityScore } from '../utils/similarity.util';
 
@@ -19,9 +18,10 @@ type FeedbackType = 'Great!' | 'Almost!' | 'Try again';
   styleUrl: './practice.component.css'
 })
 export class PracticeComponent implements OnDestroy {
-  readonly categories = ALL_WORD_CATEGORIES;
+  readonly phases = PRACTICE_PHASES;
 
-  readonly selectedCategory = signal<WordCategory>('Airport');
+  readonly selectedPhase = signal<PhaseId>('phase1');
+  readonly selectedCategory = signal('Airport');
   readonly currentIndex = signal(0);
   readonly recognizedText = signal('');
   readonly feedback = signal<FeedbackType | ''>('');
@@ -33,14 +33,23 @@ export class PracticeComponent implements OnDestroy {
   readonly ttsRate = signal(0.95);
   readonly autoPlayNextWord = signal(true);
 
-  readonly currentWord = computed(() => {
+  readonly activePhase = computed(() => PHASES_BY_ID[this.selectedPhase()]);
+
+  readonly categories = computed(() => Object.keys(this.activePhase().categories));
+
+  readonly currentItem = computed(() => {
     const category = this.selectedCategory();
-    const words = WORDS_BY_CATEGORY[category];
-    return words[this.currentIndex()];
+    const items = this.activePhase().categories[category] ?? [];
+
+    if (items.length === 0) {
+      return '';
+    }
+
+    return items[this.currentIndex() % items.length];
   });
 
   readonly currentMeaningPt = computed(() =>
-    getWordMeaningPt(this.currentWord(), this.selectedCategory())
+    this.activePhase().getMeaningPt?.(this.currentItem(), this.selectedCategory()) ?? ''
   );
 
   constructor(private readonly speechService: SpeechService) {}
@@ -49,15 +58,29 @@ export class PracticeComponent implements OnDestroy {
     this.releaseAudioUrl();
   }
 
-  changeCategory(category: WordCategory): void {
+  changePhase(phaseId: PhaseId): void {
+    this.selectedPhase.set(phaseId);
+
+    const firstCategory = Object.keys(this.activePhase().categories)[0] ?? '';
+    this.selectedCategory.set(firstCategory);
+    this.currentIndex.set(0);
+    this.resetResult();
+  }
+
+  changeCategory(category: string): void {
     this.selectedCategory.set(category);
     this.currentIndex.set(0);
     this.resetResult();
   }
 
   nextWord(): void {
-    const words = WORDS_BY_CATEGORY[this.selectedCategory()];
-    const next = (this.currentIndex() + 1) % words.length;
+    const items = this.activePhase().categories[this.selectedCategory()] ?? [];
+
+    if (items.length === 0) {
+      return;
+    }
+
+    const next = (this.currentIndex() + 1) % items.length;
     this.currentIndex.set(next);
     this.resetResult();
 
@@ -67,7 +90,7 @@ export class PracticeComponent implements OnDestroy {
   }
 
   playAudio(): void {
-    this.speechService.speak(this.currentWord(), 'en-US', this.ttsRate());
+    this.speechService.speak(this.currentItem(), 'en-US', this.ttsRate());
   }
 
   setTtsRate(value: string): void {
@@ -102,7 +125,7 @@ export class PracticeComponent implements OnDestroy {
       this.recognizedText.set(spoken);
       this.setMyVoiceUrl(result.audioBlob);
 
-      const resultScore = getSimilarityScore(this.currentWord(), spoken);
+      const resultScore = getSimilarityScore(this.currentItem(), spoken);
       this.score.set(resultScore);
       this.feedback.set(this.getFeedback(resultScore));
     } catch (error) {
