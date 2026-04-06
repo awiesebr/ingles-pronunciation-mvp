@@ -1,0 +1,85 @@
+<main class="page">
+  <section class="card">
+    <h1>Travel English Pronunciation - Phase 1</h1>
+    <p class="subtitle">Start simple: one word at a time.</p>
+
+    <div class="categories" role="group" aria-label="Phrase categories">
+      @for (category of categories; track category) {
+        <button
+          class="chip"
+          [class.active]="selectedCategory() === category"
+          type="button"
+          (click)="changeCategory(category)">
+          {{ category }}
+        </button>
+      }
+    </div>
+
+    <p class="label">Expected word</p>
+    <p class="phrase">
+      <span class="en-word">{{ currentWord() }}</span>
+      <span class="pt-word">({{ currentMeaningPt() }})</span>
+    </p>
+
+    <div class="speed-control">
+      <label class="speed-label" for="tts-rate">Audio speed: {{ ttsRate().toFixed(2) }}x</label>
+      <input
+        id="tts-rate"
+        class="speed-slider"
+        type="range"
+        min="0.7"
+        max="1.2"
+        step="0.05"
+        [value]="ttsRate()"
+        (input)="setTtsRate($any($event.target).value)" />
+    </div>
+
+    <label class="auto-play-toggle" for="auto-play-next-word">
+      <input
+        id="auto-play-next-word"
+        type="checkbox"
+        [checked]="autoPlayNextWord()"
+        (change)="setAutoPlayNextWord($any($event.target).checked)" />
+      Auto play next word
+    </label>
+
+    <div class="actions">
+      <button type="button" class="btn secondary" (click)="playAudio()">Play audio</button>
+      <button type="button" class="btn primary" [disabled]="isWorking()" (click)="speakNow()">
+        {{ isListening() ? 'Listening...' : 'Speak' }}
+      </button>
+      <button type="button" class="btn secondary" [disabled]="!myVoiceUrl()" (click)="playMyVoice()">
+        Hear my voice
+      </button>
+      <button type="button" class="btn ghost" (click)="nextWord()">Next word</button>
+    </div>
+
+    <div class="results">
+      <p class="label">Recognized phrase</p>
+      <p class="recognized">{{ recognizedText() || 'No speech captured yet.' }}</p>
+
+      <p class="label">Feedback</p>
+      <p class="feedback" [class.good]="feedback() === 'Great!'" [class.mid]="feedback() === 'Almost!'" [class.bad]="feedback() === 'Try again'">
+        {{ feedback() || 'Press Speak to start.' }}
+      </p>
+
+      @if (score() !== null) {
+        <p class="score">Score: {{ score() }}%</p>
+
+        <div class="score-meter" aria-label="Pronunciation score bar">
+          <div
+            class="score-fill"
+            [class.good]="score()! > 85"
+            [class.mid]="score()! >= 60 && score()! <= 85"
+            [class.bad]="score()! < 60"
+            [style.width.%]="score()">
+          </div>
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <p class="error">{{ errorMessage() }}</p>
+      }
+    </div>
+  </section>
+</main>
